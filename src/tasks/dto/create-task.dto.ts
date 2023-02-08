@@ -1,5 +1,5 @@
 import { TaskPriority } from '../task.model';
-import { IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 
 export class CreateTaskDto {
   @IsNotEmpty()
@@ -9,5 +9,6 @@ export class CreateTaskDto {
   description: string;
 
   @IsNotEmpty()
+  @IsEnum(TaskPriority)
   priority: TaskPriority;
 }
