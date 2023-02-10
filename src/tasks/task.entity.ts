@@ -1,10 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Exclude } from 'class-transformer';
+import { User } from 'src/auth/user.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { TaskPriority, TaskStatus } from './task.model';
 
 @Entity()
 export class Task {
-    
-  @PrimaryGeneratedColumn('uuid')  
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
@@ -19,4 +20,7 @@ export class Task {
   @Column()
   priority: TaskPriority;
 
- }
+  @ManyToOne((_type) => User, (user) => user.tasks, { eager: false })
+  @Exclude({ toPlainOnly: true })
+  user: User;
+}
