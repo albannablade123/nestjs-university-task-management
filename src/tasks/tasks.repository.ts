@@ -5,9 +5,13 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTaskFilterDto } from './dto/get-tasks-filter.dto';
 import { Task } from './task.entity';
 import { TaskStatus } from './task.model';
+import { Logger } from '@nestjs/common/services';
+import { InternalServerErrorException } from '@nestjs/common/exceptions';
 
 @Injectable()
 export class TaskRepository extends Repository<Task> {
+  private logger = new Logger('TaskRepository');
+
   constructor(private dataSource: DataSource) {
     super(Task, dataSource.createEntityManager());
   }
@@ -15,7 +19,7 @@ export class TaskRepository extends Repository<Task> {
   async getTasks(filterDto: GetTaskFilterDto, user: User): Promise<Task[]> {
     const { status, search } = filterDto;
     const query = this.createQueryBuilder('task');
-    query.where({ user })
+    query.where({ user });
 
     if (status) {
       query.andWhere('task.status = :status', { status });
@@ -27,14 +31,25 @@ export class TaskRepository extends Repository<Task> {
         { search: `%${search}%` },
       );
     }
-    const tasks = await query.getMany();
-   
 
-    if (tasks.length === 0) {
-      throw new NotFoundException(`not found`);
+    try {
+      const tasks = await query.getMany();
+
+      if (tasks.length === 0) {
+        throw new NotFoundException(`not found`);
+      }
+
+      return tasks;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch task for user "${
+          user.username
+        }" Filters :${JSON.stringify(filterDto)}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException();
+     
     }
-
-    return tasks;
   }
 
   async createTask(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
